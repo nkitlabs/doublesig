@@ -12,7 +12,6 @@ contract DoubleSig {
         bool is_paid;
     }
     
-    // mapping (address => uint) account_balance; 
     // array vs mapping 
     mapping (uint => PendingTransfer) public pending_transfer;
     
@@ -21,11 +20,8 @@ contract DoubleSig {
     address[] public owner_list;
     
     
-    constructor () public {
-        owner_list = [
-            0xD566719C73d00C5f36f4f289Ba56E561c58905A4,
-            0xd505B0E87E64AC02a4cFa13C45D66Df7c882D88a
-        ];
+    constructor (address owner1, address owner2) public {
+        owner_list = [ owner1, owner2 ];
         running_no = 0;
         
         for (uint i = 0; i < owner_list.length; i++ ) {
@@ -45,14 +41,11 @@ contract DoubleSig {
     }
     
     // Anyone can deposit ETH to this smart contract via this function
-    function deposit() external payable{
-        account_balance[msg.sender] += msg.value;
-    }
+    function deposit() external payable{}
 
     // owner1 or owner2 can initiate a transfer of ETH. Return an incremental unique id per initiate.
     function initiate(address to, uint amount) external returns (uint id){
         require(owner_id[msg.sender] >= 1, "caller must be an owner of the system.");
-        require(account_balance[to] >= amount, "amount exceeds balance that this address deposits.");
         
         uint _owner_id = owner_id[msg.sender] - 1;
         PendingTransfer memory transfer_txn;
@@ -81,7 +74,6 @@ contract DoubleSig {
         uint _owner_id = owner_id[msg.sender] - 1;
         uint amount = pending_transfer[initiate_id].amount;
         address payable address_to = payable(pending_transfer[initiate_id].address_to);
-        require(account_balance[address_to] >= amount, "amount exceeds balance that this address deposits.");
         require(!pending_transfer[initiate_id].owner_approved[_owner_id], "this owner already approved it");
         
         pending_transfer[initiate_id].owner_approved[_owner_id] = true;
@@ -92,11 +84,5 @@ contract DoubleSig {
         
         address_to.transfer(amount);
         pending_transfer[initiate_id].is_paid = true;
-        account_balance[address_to] -= amount;
-    }
-    
-    //view amount of ETH the contract contains
-    function getBalance() public view returns (uint) { 
-        return address(this).balance;
     }
 }

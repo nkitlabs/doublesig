@@ -44,11 +44,10 @@ contract DoubleSig {
         require(!pending_transfer[initiate_id].is_paid, "This request has been paid");
         
         PendingTransfer memory transfer_txn = pending_transfer[initiate_id];
-        uint amount = transfer_txn.amount;
-        address payable address_to = payable(transfer_txn.address_to);
         require(msg.sender != transfer_txn.first_approver, "this owner already approved it");
         
-        address_to.transfer(amount);
+        address payable address_to = payable(transfer_txn.address_to);
+        address_to.transfer(transfer_txn.amount);
         pending_transfer[initiate_id].is_paid = true;
     }
     

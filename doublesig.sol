@@ -6,7 +6,7 @@ contract DoubleSig {
     struct PendingTransfer {
         address address_to;
         uint amount;
-        address first_approver;
+        bool is_owner1_approved;
         bool is_paid;
     }
     
@@ -29,7 +29,7 @@ contract DoubleSig {
         PendingTransfer memory transfer_txn;
         transfer_txn.address_to = to;
         transfer_txn.amount = amount;
-        transfer_txn.first_approver = msg.sender;
+        transfer_txn.is_owner1_approved = (msg.sender == owner1);
         transfer_txn.is_paid = false;
         pending_transfer.push(transfer_txn);
         
@@ -43,11 +43,11 @@ contract DoubleSig {
         require(initiate_id < pending_transfer.length, "invalid id");
         require(!pending_transfer[initiate_id].is_paid, "This request has been paid");
         
-        PendingTransfer memory transfer_txn = pending_transfer[initiate_id];
-        require(msg.sender != transfer_txn.first_approver, "this owner already approved it");
+        bool is_the_other_owner = pending_transfer[initiate_id].is_owner1_approved != (msg.sender == owner1);
+        require(is_the_other_owner, "this owner already approved it");
         
-        address payable address_to = payable(transfer_txn.address_to);
-        address_to.transfer(transfer_txn.amount);
+        address payable address_to = payable(pending_transfer[initiate_id].address_to);
+        address_to.transfer(pending_transfer[initiate_id].amount);
         pending_transfer[initiate_id].is_paid = true;
     }
     
